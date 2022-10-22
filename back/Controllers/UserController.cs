@@ -3,6 +3,7 @@ using dto;
 
 namespace back.Controllers;
 
+using Services;
 using Model;
 
 [ApiController]
@@ -10,24 +11,25 @@ using Model;
 public class UserController : ControllerBase
 {
     [HttpPost("login")]
-    public IActionResult Login(
-        [FromBody]UsuarioDTO user
+    public async Task<IActionResult> Login(
+        [FromBody]UsuarioDTO user,
+        [FromServices]TokenService service
     )
     {
-        using TDSabadoContext context 
-            = new TDSabadoContext();
+        using TDSabadoContext context = new TDSabadoContext();
         
         var possibleUser = context.Usuarios
             .FirstOrDefault(
                 u => u.UserId == user.UserId);
         
         if (possibleUser == null)
-            return BadRequest("Nome de usuário inválido");
+            return NotFound("Nome de usuário inválido");
 
         if (possibleUser.Userpass != user.Password)
-            return BadRequest("Senha inválida!");
-        
-        return Ok();
+            return NotFound("Senha inválida!");
+
+            var token = await service.CreateToken(possibleUser);
+        return Ok(token.Value);
     }
 
     [HttpPost("register")]
